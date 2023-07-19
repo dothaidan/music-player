@@ -8,10 +8,14 @@ const cdThumb = $(".cd-thumb");
 const audio = $("#audio");
 const playBtn = $(".btn-toggle-play");
 const progress = $("#progress");
+const next = $(".btn-next");
+const prev = $(".btn-prev");
+const random = $(".btn-random");
 
 const app = {
     currentIndex: 0,
     isPlaying: false,
+    isRandom: false,
     songs: [
         {
             name: "song 1",
@@ -40,7 +44,7 @@ const app = {
         {
             name: "song 5",
             singer: "singer 5",
-            path: "./assets/music/LAK DISTRICT #1 by. RiverDLove & MILO.mp3",
+            path: "./assets/music/LAK DISTRICT  1 by. RiverDLove  MILO.mp3",
             image: "./assets/img/song 5.jpg",
         },
         {
@@ -106,6 +110,16 @@ const app = {
         const _this = this;
         const cdWidth = cd.offsetWidth;
 
+        // Xử lý CD quay / dừng
+        const cdThumbAnimate = cdThumb.animate(
+            [{ transform: "rotate(360deg)" }],
+            {
+                duration: 10000, // 10s
+                iterations: Infinity,
+            }
+        );
+        cdThumbAnimate.pause();
+
         // Xử lý phóng to / thu nhỏ CD
         document.onscroll = function () {
             const scrollTop =
@@ -129,12 +143,14 @@ const app = {
         audio.onplay = function () {
             _this.isPlaying = true;
             player.classList.add("playing");
+            cdThumbAnimate.play();
         };
 
         // Khi bài hát pause
         audio.onpause = function () {
             _this.isPlaying = false;
             player.classList.remove("playing");
+            cdThumbAnimate.pause();
         };
 
         // xử lý thanh trượt khi bài hát play
@@ -151,12 +167,62 @@ const app = {
             const seekTime = (audio.duration / 100) * e.target.value;
             audio.currentTime = seekTime;
         };
+
+        // Khi next song
+        next.onclick = function () {
+            if (_this.isRandom) {
+                _this.playRandomSong();
+            } else {
+                _this.nextSong();
+            }
+            audio.play();
+        };
+        // Khi prev song
+        prev.onclick = function () {
+            if (_this.isRandom) {
+                _this.playRandomSong();
+            } else {
+                _this.prevSong();
+            }
+            audio.play();
+        };
+
+        // Khi random song
+        random.onclick = function () {
+            _this.isRandom = !_this.isRandom;
+            random.classList.toggle("active", _this.isRandom);
+        };
     },
     loadCurrentSong: function () {
         heading.textContent = this.currentSong.name;
         cdThumb.style.backgroundImage = `url("${this.currentSong.image}")`;
         audio.src = this.currentSong.path;
     },
+
+    nextSong: function () {
+        this.currentIndex++;
+        if (this.currentIndex >= this.songs.length) {
+            this.currentIndex = 0;
+        }
+        this.loadCurrentSong();
+    },
+    prevSong: function () {
+        this.currentIndex--;
+        if (this.currentIndex < 0) {
+            this.currentIndex = this.songs.length - 1;
+        }
+        this.loadCurrentSong();
+    },
+    playRandomSong: function () {
+        let newIndex;
+        do {
+            newIndex = Math.floor(Math.random() * this.songs.length);
+        } while (newIndex === this.currentIndex);
+
+        this.currentIndex = newIndex;
+        this.loadCurrentSong();
+    },
+
     start: function () {
         // Định nghĩa các thuộc tính cho obj
         this.defineProperties();
