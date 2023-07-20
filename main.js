@@ -11,11 +11,15 @@ const progress = $("#progress");
 const next = $(".btn-next");
 const prev = $(".btn-prev");
 const random = $(".btn-random");
+const repeatBtn = $(".btn-repeat");
+const playList = $(".playlist");
 
 const app = {
     currentIndex: 0,
     isPlaying: false,
     isRandom: false,
+    isRepeat: false,
+    setting: {},
     songs: [
         {
             name: "song 1",
@@ -79,9 +83,11 @@ const app = {
         },
     ],
     render: function () {
-        const htmls = this.songs.map((song) => {
+        const htmls = this.songs.map((song, index) => {
             return `
-                <div class="song">
+                <div class="song ${
+                    index === this.currentIndex ? "active" : ""
+                }" data-index="${index}">
                 <div
                     class="thumb"
                     style="
@@ -176,6 +182,8 @@ const app = {
                 _this.nextSong();
             }
             audio.play();
+            _this.render();
+            _this.scrollToActiveSong();
         };
         // Khi prev song
         prev.onclick = function () {
@@ -185,6 +193,8 @@ const app = {
                 _this.prevSong();
             }
             audio.play();
+            _this.render();
+            _this.scrollToActiveSong();
         };
 
         // Khi random song
@@ -192,6 +202,44 @@ const app = {
             _this.isRandom = !_this.isRandom;
             random.classList.toggle("active", _this.isRandom);
         };
+
+        // Xử lý lặp lại bài hát
+        repeatBtn.onclick = function () {
+            _this.isRepeat = !_this.isRepeat;
+            repeatBtn.classList.toggle("active", _this.isRepeat);
+        };
+
+        // Xử lý next nhạc khi hết bài
+        audio.onended = function () {
+            if (_this.isRepeat) {
+                audio.play();
+            } else {
+                next.click();
+            }
+        };
+
+        // Lắng nghe hành vi click vào playlist
+        playList.onclick = function (e) {
+            const songNode = e.target.closest(".song:not(.active)");
+            // Xử lý khi bấm vào song
+            if (songNode || e.target.closest(".option")) {
+                // Xử lý khi click vào song
+                if (songNode) {
+                    _this.currentIndex = Number(songNode.dataset.index);
+                    _this.loadCurrentSong();
+                    _this.render();
+                    audio.play();
+                }
+            }
+        };
+    },
+    scrollToActiveSong: function () {
+        setTimeout(() => {
+            $(".song.active").scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+            });
+        }, 100);
     },
     loadCurrentSong: function () {
         heading.textContent = this.currentSong.name;
